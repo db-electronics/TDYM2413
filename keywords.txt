@@ -1,0 +1,40 @@
+#######################################
+# Syntax Coloring Map TDSN76489
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+AudioTDSN76489		KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+reset				KEYWORD2
+write				KEYWORD2
+setOutput			KEYWORD2
+update				KEYWORD2
+play				KEYWORD2
+isPlaying			KEYWORD2
+writeByte			KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+NOISE_TAPPED_NORMAL LITERAL1
+NOISE_BITS_NORMAL   LITERAL1
+NOISE_TAPPED_SMS    LITERAL1
+NOISE_BITS_SMS      LITERAL1
+TONE0_RIGHT			LITERAL1
+TONE1_RIGHT			LITERAL1
+TONE2_RIGHT			LITERAL1
+NOISE_RIGHT			LITERAL1
+TONE0_LEFT			LITERAL1 
+TONE1_LEFT			LITERAL1
+TONE2_LEFT			LITERAL1
+NOISE_LEFT			LITERAL1
+
+
