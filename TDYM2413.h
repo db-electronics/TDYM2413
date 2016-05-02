@@ -1,5 +1,5 @@
  /*
-    Title:          TDSN76489.h
+    Title:          TDYM2413.h
     Author:         René Richard
     Description:
         
@@ -10,117 +10,161 @@
         USB Type    - Serial
  LICENSE
  
-    This file is part of TDSN76489.
-    TDSN76489 is free software: you can redistribute it and/or modify
+    This file is part of TDYM2413.
+    TDYM2413 is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-    Foobar is distributed in the hope that it will be useful,
+    TDYM2413 is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
     You should have received a copy of the GNU General Public License
-    along with TDSN76489.  If not, see <http://www.gnu.org/licenses/>.
+    along with TDYM2413.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef TDSN76489_h_
-#define TDSN76489_h_
+#ifndef TDYM2413_h_
+#define TDYM2413_h_
 
 #include <AudioStream.h>
 #include <Audio.h>
 #include "midinotes.h"
 #include <inttypes.h>
 
-#define SN76489CLOCK		3579545
-#define CLOCKSPERSAMPLE		SN76489CLOCK / 16 / AUDIO_SAMPLE_RATE
+/* select output bits size of output : 8 or 16 */
+#define SAMPLE_BITS 16
 
-/* Default settings */
-#define NOISE_TAPPED_NORMAL 0x0006
-#define NOISE_BITS_NORMAL   15
-#define NOISE_TAPPED_SMS    0x0009
-#define NOISE_BITS_SMS      16
+#ifndef PI
+#define PI 3.14159265358979323846
+#endif
 
-/* Registers */
-#define LATCH_TONE0 0x00
-#define LATCH_TONE1 0x20
-#define LATCH_TONE2 0x40
-#define LATCH_NOISE 0x60
-#define LATCH_VOL0 0x10
-#define LATCH_VOL1 0x30
-#define LATCH_VOL2 0x50
-#define LATCH_VOL3 0x70
+#if (SAMPLE_BITS==16)
+typedef INT16 SAMP;
+#endif
+#if (SAMPLE_BITS==8)
+typedef INT8 SAMP;
+#endif
 
-#define ENABLE_TONE0 0x01
-#define ENABLE_TONE1 0x02
-#define ENABLE_TONE2 0x04
-#define ENABLE_NOISE 0x08
-
-/* Channel outputs */
-#define TONE0_RIGHT 0x01
-#define TONE1_RIGHT 0x02
-#define TONE2_RIGHT 0x04
-#define NOISE_RIGHT 0x08
-#define TONE0_LEFT  0x10
-#define TONE1_LEFT  0x20
-#define TONE2_LEFT  0x40
-#define NOISE_LEFT  0x80
-
-class AudioTDSN76489 : public AudioStream
+class AudioTDYM2413: public AudioStream
 {
 	public:
 
-		AudioTDSN76489(void) : AudioStream(0, NULL) { reset(NOISE_BITS_SMS, NOISE_TAPPED_SMS); }
-		void reset(uint16_t noise_bits, uint16_t tapped);
-		void muteAllChannels(void);
-		void setVolume(uint32_t channel, uint8_t value);
-		void setToneCounter(uint32_t channel, uint16_t value);
-		void setNote(uint32_t channel, uint8_t midiNoteNum);
-		void write(uint8_t data);
+		AudioTDYM2413(void) : AudioStream(0, NULL) { YM2413Init(0,0); }
+
+		int32_t YM2413Init(uint32_t clock, uint32_t rate);
+		
 		void play(bool val) { playing = val; } 
 		inline bool isPlaying(void) { return playing; }
 		virtual void update(void);
 
-		//tone register values for MIDI notes, lowest possible note is A2(45) = 110.099Hz
-		const uint16_t midi[108] =
-		{
-			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, //0-11
-			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, //12-23
-			  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, //24-35
-			  0,   0,   0,   0,   0,   0,   0,   0,   0,1016, 959, 905, //36-47
-			855, 807, 761, 719, 678, 640, 604, 570, 538, 508, 479, 452, //48-59
-			427, 403, 380, 359, 339, 320, 302, 285, 269, 254, 239, 226, //60-71
-			213, 201, 190, 179, 169, 160, 151, 142, 134, 127, 119, 113, //72-83
-			106, 100,  95,  89,  84,  80,  75,  71,  67,  63,  59,  56, //84-95
-			 53,  50,  47,  44,  42,  40,  37,  35,  33,  31,  29,  28  //96-107
-		};
-
 	private:
 		
 		volatile bool playing;
-		typedef struct sn76489_struct {
-			uint8_t volume[4];
-			uint16_t tone[3];
-			uint8_t noise;
-			uint8_t noiseType;		//Noise Bit2 : 4 = White, 0 = Periodic
-			uint16_t noise_shift;	//Noise channel linear feedback shift register (LFSR)
-			uint16_t noise_bits;	//bits used in the shift register, 16 or 15 depending on system
-			uint16_t noise_tapped;	//mask for which bits are XOR'ed in the LFSR
-			int8_t tone_state[4];
-			uint8_t latched_reg;
-			int32_t counter[4];
-			int32_t clockspersample;
-		} _psg;
-		_psg psg;
-
-		int parity(int input);
-
-		const int16_t volume_values[16] = 
-		{ 
-    		1784, 1548, 1338, 1150,  984,  834,  702,  584,
-     		478,  384,  300,  226,  160,  100,   48,    0
-		};
 		
-	
+		void OPLL_initalize(YM2413 *chip);
+		
+		typedef struct{
+			UINT32	ar;			/* attack rate: AR<<2			*/
+			UINT32	dr;			/* decay rate:  DR<<2			*/
+			UINT32	rr;			/* release rate:RR<<2			*/
+			UINT8	KSR;		/* key scale rate				*/
+			UINT8	ksl;		/* keyscale level				*/
+			UINT8	ksr;		/* key scale rate: kcode>>KSR	*/
+			UINT8	mul;		/* multiple: mul_tab[ML]		*/
+
+			/* Phase Generator */
+			UINT32	phase;		/* frequency counter			*/
+			UINT32	freq;		/* frequency counter step		*/
+			UINT8   fb_shift;	/* feedback shift value			*/
+			INT32   op1_out[2];	/* slot1 output for feedback	*/
+
+			/* Envelope Generator */
+			UINT8	eg_type;	/* percussive/nonpercussive mode*/
+			UINT8	state;		/* phase type					*/
+			UINT32	TL;			/* total level: TL << 2			*/
+			INT32	TLL;		/* adjusted now TL				*/
+			INT32	volume;		/* envelope counter				*/
+			UINT32	sl;			/* sustain level: sl_tab[SL]	*/
+
+			UINT8	eg_sh_dp;	/* (dump state)					*/
+			UINT8	eg_sel_dp;	/* (dump state)					*/
+			UINT8	eg_sh_ar;	/* (attack state)				*/
+			UINT8	eg_sel_ar;	/* (attack state)				*/
+			UINT8	eg_sh_dr;	/* (decay state)				*/
+			UINT8	eg_sel_dr;	/* (decay state)				*/
+			UINT8	eg_sh_rr;	/* (release state for non-perc.)*/
+			UINT8	eg_sel_rr;	/* (release state for non-perc.)*/
+			UINT8	eg_sh_rs;	/* (release state for perc.mode)*/
+			UINT8	eg_sel_rs;	/* (release state for perc.mode)*/
+
+			UINT32	key;		/* 0 = KEY OFF, >0 = KEY ON		*/
+
+			/* LFO */
+			UINT32	AMmask;		/* LFO Amplitude Modulation enable mask */
+			UINT8	vib;		/* LFO Phase Modulation enable flag (active high)*/
+
+			/* waveform select */
+			unsigned int wavetable;
+		} YM2413_OPLL_SLOT;
+		
+		typedef struct{
+			YM2413_OPLL_SLOT SLOT[2];
+			/* phase generator state */
+			UINT32  block_fnum;	/* block+fnum					*/
+			UINT32  fc;			/* Freq. freqement base			*/
+			UINT32  ksl_base;	/* KeyScaleLevel Base step		*/
+			UINT8   kcode;		/* key code (for key scaling)	*/
+			UINT8   sus;		/* sus on/off (release speed in percussive mode)*/
+		} YM2413_OPLL_CH;
+		
+
+		/* chip state */
+		typedef struct {
+			YM2413_OPLL_CH P_CH[9];                /* OPLL chips have 9 channels*/
+			UINT8	instvol_r[9];			/* instrument/volume (or volume/volume in percussive mode)*/
+
+			UINT32	eg_cnt;					/* global envelope generator counter	*/
+			UINT32	eg_timer;				/* global envelope generator counter works at frequency = chipclock/72 */
+			UINT32	eg_timer_add;			/* step of eg_timer						*/
+			UINT32	eg_timer_overflow;		/* envelope generator timer overlfows every 1 sample (on real chip) */
+
+			UINT8	rhythm;					/* Rhythm mode					*/
+
+			/* LFO */
+			UINT32	lfo_am_cnt;
+			UINT32	lfo_am_inc;
+			UINT32	lfo_pm_cnt;
+			UINT32	lfo_pm_inc;
+
+			UINT32	noise_rng;				/* 23 bit noise shift register	*/
+			UINT32	noise_p;				/* current noise 'phase'		*/
+			UINT32	noise_f;				/* current noise period			*/
+
+
+		/* instrument settings */
+		/*
+			0-user instrument
+			1-15 - fixed instruments
+			16 -bass drum settings
+			17,18 - other percussion instruments
+		*/
+			UINT8 inst_tab[19][8];
+
+			/* external event callback handlers */
+			OPLL_UPDATEHANDLER UpdateHandler; /* stream update handler		*/
+			int UpdateParam;				/* stream update parameter		*/
+
+			UINT32	fn_tab[1024];			/* fnumber->increment counter	*/
+
+			UINT8 address;					/* address register				*/
+			UINT8 status;					/* status flag					*/
+
+			int clock;						/* master clock  (Hz)			*/
+			int rate;						/* sampling rate (Hz)			*/
+			double freqbase;				/* frequency base				*/
+		} YM2413;
+		
+		YM2413 YM2413regs;
 };
 
 #endif
