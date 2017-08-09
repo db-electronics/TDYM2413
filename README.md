@@ -1,5 +1,5 @@
-# TDSN76489
-SN76489 implementation for Teensyduino Audio Library
+# TDYM2413
+YM2413 implementation for Teensyduino Audio Library
 
-Information regarding the implementation of the Sega Master System's variant of the SN76489 can be found at:
-http://www.smspower.org/Development/SN76489
+Information regarding the implementation of the Sega Master System's YM2413 can be found at:
+http://www.smspower.org/Development/YM2413
